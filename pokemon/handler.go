@@ -3,13 +3,11 @@ package pokemon
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
-type Pokemon struct {
-    Name string `json:"name"`
-}
+
 
 func GetPokemon(name string) (*Pokemon, error) {
     resp, err := http.Get(fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", name))
@@ -18,7 +16,7 @@ func GetPokemon(name string) (*Pokemon, error) {
     }
     defer resp.Body.Close()
 
-    body, err := ioutil.ReadAll(resp.Body)
+    body, err := io.ReadAll(resp.Body)
     if err != nil {
         return nil, err
     }
