@@ -2,30 +2,34 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/Parvis123/pokedex-apis/pokedex-apis/pokemon"
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	pokemon, err := pokemon.GetPokemon("croagunk")
+    r := mux.NewRouter()
+    r.HandleFunc("/pokemon/{name}", pokemon.GetPokemon).Methods("GET")
 
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Println("Pokemon:", pokemon.Name)
-	fmt.Println("Height:", pokemon.Height)
-	fmt.Println("Weight:", pokemon.Weight)
-	fmt.Println("Front Default Sprite:", pokemon.Sprites.Other.Home.FrontDefault)
-	fmt.Println("Front Shiny Sprite:", pokemon.Sprites.Other.Home.FrontShiny)
-	fmt.Println("Cry:", pokemon.Cry.Latest)
+    r.Use(func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            // Set headers
+            w.Header().Set("Access-Control-Allow-Origin", "*")
+            w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type")
 
+            // If it's a preflight request, respond with 200
+            if r.Method == "OPTIONS" {
+                w.WriteHeader(http.StatusOK)
+                return
+            }
 
-	for _, ability := range pokemon.Abilities {
-		fmt.Println("Ability:", ability.Ability.Name)
-	}
+            // Next
+            next.ServeHTTP(w, r)
+        })
+    })
 
-	for _, ability := range pokemon.Types {
-		fmt.Println("Types:", ability.Type.Name)
-	}
+    fmt.Println("Server is now running on port 8000")
+    http.ListenAndServe(":8000", r)
 }
